@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     const permissionModal = new bootstrap.Modal(document.getElementById('permissionModal'));
     const notificationModal = new bootstrap.Modal(document.getElementById('notificationModal'));
     const chatContainer = document.getElementById('chat-container');
@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuButton = document.getElementById('menu-button');
 
     let notificationsEnabled = true;
+
 
     // Adjust viewport for mobile devices
     function setVh() {
@@ -18,6 +19,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show permission modal
     permissionModal.show();
+
+      // 1) Try the official Brave check
+    let braveDetected = false;
+    if (navigator.brave && typeof navigator.brave.isBrave === 'function') {
+        braveDetected = await navigator.brave.isBrave();
+    }
+
+    // 2) If that fails, try user agent or UA-CH fallback
+    if (!braveDetected) {
+        if (navigator.userAgent.includes("Brave")) {
+        braveDetected = true;
+        } else if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+        const data = await navigator.userAgentData.getHighEntropyValues(["brands"]);
+        if (data.brands.some(b => b.brand.includes("Brave"))) {
+            braveDetected = true;
+        }
+        }
+    }
+
+    // 3) If Brave is detected, show instructions
+    if (braveDetected) {
+        alert("It looks like you’re using Brave. Please ensure:\n\n1. Brave Settings > Privacy and Security > Site and Shields Settings > Notifications > 'Sites can ask to send notifications' is ON.\n2. Enable 'Use Google Services for Push Messaging' if shown.\n\nOtherwise, push notifications may fail.");
+    }
 
     // Grant permission button
     document.getElementById('grant-permission').addEventListener('click', ()=> {
@@ -271,8 +295,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 const messageHTML = `
                     <strong>Order Status:</strong> ${data.status || "Unknown"}<br>
-                    <strong>Counter No:</strong> ${data.counter_no || "N/A"}<br>
-                    <strong>Token No:</strong> ${token}
+                    <strong>Counter No:</strong> ${data.counter_no || "Unknown"}<br>
+                    <strong>Token No:</strong> ${data.token_no || "Unknown"} 
                 `;
                 appendMessage(messageHTML, 'server');
 
@@ -292,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error("Error fetching order status:", error);
-                appendMessage("Error fetching order status. Please try again.", 'server');
+                appendMessage(error.json, 'server');
             });
     }
 });

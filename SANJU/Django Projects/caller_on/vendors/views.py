@@ -214,7 +214,7 @@ def proxy_update_order(request):
     It accepts an HTTP request from the ESP8266 and forwards it to the HTTPS API.
     """
     # Adjust this URL to match your HTTPS endpoint (including the '/api/update-order/' path)
-    target_url = "https://eb81-202-88-237-210.ngrok-free.app/vendors/api/update-order/"
+    target_url = "https://feline-clever-mutually.ngrok-free.app/vendors/api/update-order/"
     
     # Copy request headers. Remove 'Host' header so that 'requests' can set it automatically.
     headers = {key: value for key, value in request.headers.items() if key.lower() != "host"}
